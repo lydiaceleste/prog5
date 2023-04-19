@@ -1,5 +1,9 @@
 let
-    var x := 1
+    var i := 1
+    var a := 3
   in
-    x := 2
+    while i < a do (
+      i := i + a
+    )
   end
+  

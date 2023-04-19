@@ -105,7 +105,7 @@ public class Translate {
   
     Tree.Exp location = access.acc.exp(framePointer);
     return new Ex(location);
-}
+  }
 
 
   public Exp FieldVar(Exp record, int index) {
@@ -159,11 +159,11 @@ public class Translate {
   }
 
   public Exp OpExp(int op, Exp left, Exp right) {
-    return Error();
+    return new Ex(BINOP(op, left.unEx(), right.unEx()));
   }
 
   public Exp StrOpExp(int op, Exp left, Exp right) {
-    return Error();
+    return new Ex(BINOP(op, left.unEx(), right.unEx()));
   }
 
   public Exp RecordExp(ExpList init) {
@@ -183,18 +183,29 @@ public class Translate {
   }
 
   public Exp WhileExp(Exp test, Exp body, Label done) {
-    return Error();
-  }
+    Label testLabel = new Label();
+    Label bodyLabel = new Label();
+
+    // Now create tree.stms for those labels
+    Tree.Stm testStm = SEQ(LABEL(testLabel), test.unCx(bodyLabel, done));
+    Tree.Stm bodyStm = SEQ(LABEL(bodyLabel), body.unNx());
+
+    Tree.Stm left = SEQ(testStm, SEQ(bodyStm, JUMP(testLabel)));
+
+    return new Nx(SEQ(left, LABEL(done)));
+}
+
   public Exp ForExp(Access i, Exp lo, Exp hi, Exp body, Label done) {
-    return Error();
+      return Error();
   }
 
   public Exp ForExp(Exp id, Exp lo, Exp hi, Exp body, Label done) {
-    return Error();
+      return Error();
+
   }
 
   public Exp BreakExp(Label done) {
-    return Error();
+    return new Nx(JUMP(done));
   }
 
   public Exp LetExp(ExpList lets, Exp body) {
@@ -210,7 +221,7 @@ public class Translate {
   }
 
   public Exp ArrayExp(Exp size, Exp init) {
-    return Error();
+      return new Ex(frame.externalCall("initArray", ExpList(size.unEx(), ExpList(init.unEx()))));
   }
 
   public Exp VarDec(Access a, Exp init) {
