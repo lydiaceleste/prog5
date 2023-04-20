@@ -28,18 +28,29 @@ class IfThenElseExp extends Exp {
       return new Tree.SEQ(condStm, new Tree.SEQ(new Tree.LABEL(f), bStm));
     if (bStm == null)
       return new Tree.SEQ(condStm, new Tree.SEQ(new Tree.LABEL(t), aStm));
-    return new Tree.SEQ(condStm,
-			new Tree.SEQ(new Tree.SEQ(new Tree.LABEL(t), aStm),
+    return new Tree.SEQ(condStm, new Tree.SEQ(new Tree.SEQ(new Tree.LABEL(t), aStm),
 				     new Tree.SEQ(new Tree.LABEL(f), bStm)));
   }
 
   Tree.Exp unEx() {
-    // You must implement this function
-    return new Tree.CONST(0);
+    Temp result = new Temp();
+    Tree.Stm condStm = cond.unCx(t, f);
+    Tree.Stm aStm = new Tree.MOVE(new Tree.TEMP(result), a.unEx());
+    Tree.Stm bStm = new Tree.MOVE(new Tree.TEMP(result), b.unEx());
+    Tree.Stm trueStm = new Tree.SEQ(new Tree.LABEL(t), aStm);
+    Tree.Stm falseStm = new Tree.SEQ(new Tree.LABEL(f), bStm);
+    Tree.Stm joinStm = new Tree.LABEL(join);
+    return new Tree.ESEQ(new Tree.SEQ(condStm, new Tree.SEQ(trueStm, new Tree.SEQ(joinStm, falseStm))),
+                         new Tree.TEMP(result));
   }
 
   Tree.Stm unNx() {
-    // You must implement this function
-    return null;
-  }
+    Tree.Stm condStm = cond.unCx(t, f);
+    Tree.Stm trueStm = a.unNx();
+    Tree.Stm falseStm = b.unNx();
+    Tree.Stm joinStm = new Tree.JUMP(join);
+    return new Tree.SEQ(condStm, new Tree.SEQ(trueStm, new Tree.SEQ(falseStm, new Tree.SEQ(joinStm, new Tree.LABEL(join)))));
+}
+  
+
 }

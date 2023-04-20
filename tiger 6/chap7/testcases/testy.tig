@@ -1,9 +1,1 @@
-let
-    var i := 1
-    var a := 3
-  in
-    while i < a do (
-      i := i + a
-    )
-  end
-  
+if 1 > 2 then 2 else 3

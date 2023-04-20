@@ -63,8 +63,7 @@ public class Translate {
   private static Tree.Stm JUMP(Label target) {
     return new Tree.JUMP(target);
   }
-  private static
-  Tree.Stm CJUMP(int relop, Tree.Exp l, Tree.Exp r, Label t, Label f) {
+  private static Tree.Stm CJUMP(int relop, Tree.Exp l, Tree.Exp r, Label t, Label f) {
     return new Tree.CJUMP(relop, l, r, t, f);
   }
   private static Tree.Stm SEQ(Tree.Stm left, Tree.Stm right) {
@@ -185,13 +184,9 @@ public class Translate {
   public Exp WhileExp(Exp test, Exp body, Label done) {
     Label testLabel = new Label();
     Label bodyLabel = new Label();
-
-    // Now create tree.stms for those labels
     Tree.Stm testStm = SEQ(LABEL(testLabel), test.unCx(bodyLabel, done));
     Tree.Stm bodyStm = SEQ(LABEL(bodyLabel), body.unNx());
-
     Tree.Stm left = SEQ(testStm, SEQ(bodyStm, JUMP(testLabel)));
-
     return new Nx(SEQ(left, LABEL(done)));
 }
 
@@ -221,7 +216,7 @@ public class Translate {
   }
 
   public Exp ArrayExp(Exp size, Exp init) {
-      return new Ex(frame.externalCall("initArray", ExpList(size.unEx(), ExpList(init.unEx()))));
+      return Error();
   }
 
   public Exp VarDec(Access a, Exp init) {
