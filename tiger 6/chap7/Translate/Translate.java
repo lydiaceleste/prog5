@@ -5,6 +5,27 @@ import Tree.CJUMP;
 import Temp.Temp;
 import Temp.Label;
 
+//todo: 
+  //subscriptVar
+  //callExp
+  //NilExp
+  //recordExp
+  //forExp
+  //typeDec and functionDec? idk im confused abt those tbh
+  //fix his implementation in IfThenElseExp to remove unecessary JUMPs
+
+
+  //need to test:
+      //arrayExp
+      //seqExp
+      //whileExp
+      //fieldVar
+      //letExp i think is good maybe just test 1 more times
+
+
+
+
+
 public class Translate {
   public Frame.Frame frame;
   public Translate(Frame.Frame f) {
@@ -93,6 +114,12 @@ public class Translate {
     return new Ex(CONST(0));
   }
 
+
+
+
+
+
+
   public Exp SimpleVar(Access access, Level level) {
     Tree.Exp framePointer = TEMP(frame.FP());
     Level currentLevel = level;
@@ -169,6 +196,9 @@ public class Translate {
     return new Nx(UEXP(CallExp(f, args, from)));
   }
 
+
+
+
   public Exp OpExp(int op, Exp left, Exp right) {
     Tree.Exp leftExp = left.unEx();
       Tree.Exp rightExp = right.unEx();
@@ -202,11 +232,13 @@ public class Translate {
 
   public Exp RecordExp(ExpList init) {
     //NOT COMPLETE
+    //i think we will need a helper method for this one
     return Error();
   }
 
   public Exp SeqExp(ExpList e) {
     //NOT COMPLETE!
+    //hasnt properly been tested
     if(e==null)
         return NilExp();
     if(e.head == null)
@@ -227,6 +259,7 @@ public class Translate {
   }
 
   public Exp WhileExp(Exp test, Exp body, Label done) {
+    //double check this
     Label testLabel = new Label();
     Label bodyLabel = new Label();
     Tree.Stm testStm = SEQ(LABEL(testLabel), test.unCx(bodyLabel, done));
@@ -237,6 +270,7 @@ public class Translate {
 
   public Exp ForExp(Access i, Exp lo, Exp hi, Exp body, Label done) {
     //NOT COMPLETE
+    //test 12 - variation from his output so not correct
     Tree.Exp loEx = lo.unEx();
     Tree.Exp hiEx = hi.unEx();
     Temp loReg = i.home.frame.FP();
@@ -261,9 +295,11 @@ public class Translate {
 
   public Exp BreakExp(Label done) {
     return new Nx(JUMP(done));
+    //should be sufficient
   }
 
   public Exp LetExp(ExpList lets, Exp body) {
+    //i believe this is good
       if (lets == null) {
         return body;
     } else {

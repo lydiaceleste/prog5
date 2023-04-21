@@ -1,4 +1,1 @@
-let
-    array my_array = array of int
-    var arr: my_array := my_array [10] of 0
-end
+while 10 > 5 do 1 + 1
