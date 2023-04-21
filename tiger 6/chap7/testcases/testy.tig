@@ -1,7 +1,4 @@
 let
-    type point = { x:int, y:int }
-    var p: point := {x=1, y=2}
-in
-  (p.x := 3;
-   print(p.x))
+    array my_array = array of int
+    var arr: my_array := my_array [10] of 0
 end
