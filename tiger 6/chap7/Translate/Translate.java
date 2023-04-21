@@ -237,11 +237,24 @@ public class Translate {
 
   public Exp ForExp(Access i, Exp lo, Exp hi, Exp body, Label done) {
     //NOT COMPLETE
-    return Error();
-  }
+    Tree.Exp loEx = lo.unEx();
+    Tree.Exp hiEx = hi.unEx();
+    Temp loReg = i.home.frame.FP();
+    Temp hiReg = new Temp();
+    Label bodyLabel = new Label();
+    Label exitLabel = new Label();
+    Label incrementLabel = new Label();
+    Tree.Stm loadLoHi = SEQ(MOVE(i.acc.exp(TEMP(loReg)), loEx), MOVE(TEMP(hiReg), hiEx));
+    Tree.Stm incExp = SEQ(SEQ(LABEL(incrementLabel), MOVE(TEMP(loReg), BINOP(Tree.BINOP.PLUS, TEMP(loReg), CONST(1)))), JUMP(bodyLabel));
+    Tree.Stm bodyStm = SEQ(body.unNx(), JUMP(incrementLabel));
+    Tree.Stm testStm = CJUMP(CJUMP.LE, i.acc.exp(TEMP(loReg)), TEMP(hiReg), bodyLabel, exitLabel);
+    Tree.Stm forBlock = SEQ(loadLoHi, SEQ(testStm, SEQ(bodyStm, incExp)));
+    return new Nx(SEQ(forBlock, LABEL(exitLabel)));
+}
 
   public Exp ForExp(Exp id, Exp lo, Exp hi, Exp body, Label done) {
     //NOT COMPLETE
+    //why r there two, ur killing me
       return Error();
 
   }
@@ -263,8 +276,9 @@ public class Translate {
   }
 
   public Exp ArrayExp(Exp size, Exp init) {
-    //NOT COMPLETE
-      return Error();
+    //NOT COMPLETE, havent properly tested this
+      Tree.Exp memSize = size.unEx();
+      return new Ex(frame.externalCall("initArray", ExpList(memSize, ExpList(init.unEx()))));
   }
 
   public Exp VarDec(Access a, Exp init) {
@@ -272,7 +286,7 @@ public class Translate {
   }
 
   public Exp TypeDec() {
-        //NOT COMPLETE
+        //NOT COMPLETE, or its supposed to be like this but probably not
 
     return new Nx(null);
   }
