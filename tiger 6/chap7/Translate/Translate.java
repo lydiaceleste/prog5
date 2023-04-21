@@ -108,15 +108,25 @@ public class Translate {
 
 
   public Exp FieldVar(Exp record, int index) {
-    return Error();
+        //NOT COMPLETE, havent been able to test it
+    int offset = index * frame.wordSize();
+    Temp pointer = new Temp();
+    Tree.Stm pointerStm = MOVE(TEMP(pointer), record.unEx());
+    
+    Tree.Exp pointerExp = MEM(BINOP(Tree.BINOP.PLUS, TEMP(pointer), CONST(offset)));
+    
+    return new Ex(ESEQ(pointerStm, pointerExp));
   }
 
   public Exp SubscriptVar(Exp array, Exp index) {
+        //NOT COMPLETE
+
     return Error();
   }
 
   public Exp NilExp() {
-    return Error();
+    //not COMPLETE
+    return null;
   }
 
   public Exp IntExp(int value) {
@@ -141,6 +151,8 @@ public class Translate {
     return frame.externalCall(f.toString(), ExpList(args));
   }
   private Tree.Exp CallExp(Level f, ExpList args, Level from) {
+        //NOT COMPLETE
+
     throw new Error("Translate.CallExp unimplemented");
   }
 
@@ -158,7 +170,30 @@ public class Translate {
   }
 
   public Exp OpExp(int op, Exp left, Exp right) {
-    return new Ex(BINOP(op, left.unEx(), right.unEx()));
+    Tree.Exp leftExp = left.unEx();
+      Tree.Exp rightExp = right.unEx();
+      switch(op) {
+          case Absyn.OpExp.PLUS:
+          case Absyn.OpExp.MINUS:
+          case Absyn.OpExp.MUL:
+          case Absyn.OpExp.DIV:
+              return new Ex(BINOP(op, left.unEx(), right.unEx()));
+          case Absyn.OpExp.EQ:
+              return new RelCx(CJUMP.EQ, left.unEx(), right.unEx());
+          case Absyn.OpExp.NE:
+              return new RelCx(CJUMP.NE, left.unEx(), right.unEx());
+          case Absyn.OpExp.GE:
+              return new RelCx(CJUMP.GE, left.unEx(), right.unEx());
+          case Absyn.OpExp.GT:
+              return new RelCx(CJUMP.GT, left.unEx(), right.unEx());
+          case Absyn.OpExp.LE:
+              return new RelCx(CJUMP.LE, left.unEx(), right.unEx());
+          case Absyn.OpExp.LT:
+              return new RelCx(CJUMP.LT, left.unEx(), right.unEx());
+          default:
+               System.err.println("unknown operator "+op);
+               return Error();
+      }
   }
 
   public Exp StrOpExp(int op, Exp left, Exp right) {
@@ -166,11 +201,21 @@ public class Translate {
   }
 
   public Exp RecordExp(ExpList init) {
+    //NOT COMPLETE
     return Error();
   }
 
   public Exp SeqExp(ExpList e) {
-    return Error();
+    //NOT COMPLETE!
+    if(e==null)
+        return NilExp();
+    if(e.head == null)
+        return NilExp();
+    if(e.tail==null)
+        return new Ex(e.head.unEx());
+    if(e.tail.head == null)
+        return e.head;
+    else return new Ex(ESEQ(e.head.unNx(), SeqExp(e.tail).unEx()));
   }
 
   public Exp AssignExp(Exp lhs, Exp rhs) {
@@ -191,10 +236,12 @@ public class Translate {
 }
 
   public Exp ForExp(Access i, Exp lo, Exp hi, Exp body, Label done) {
-      return Error();
+    //NOT COMPLETE
+    return Error();
   }
 
   public Exp ForExp(Exp id, Exp lo, Exp hi, Exp body, Label done) {
+    //NOT COMPLETE
       return Error();
 
   }
@@ -216,6 +263,7 @@ public class Translate {
   }
 
   public Exp ArrayExp(Exp size, Exp init) {
+    //NOT COMPLETE
       return Error();
   }
 
@@ -224,10 +272,14 @@ public class Translate {
   }
 
   public Exp TypeDec() {
-    return Error();
+        //NOT COMPLETE
+
+    return new Nx(null);
   }
 
   public Exp FunctionDec() {
+        //NOT COMPLETE?? or its supposed to be this idk
+
     return new Nx(null);
   }
 }
