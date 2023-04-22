@@ -5,22 +5,19 @@ import Tree.CJUMP;
 import Temp.Temp;
 import Temp.Label;
 
-//todo: 
+//checks: while, for
+
+  //fieldvar
   //subscriptVar
   //callExp
-  //NilExp
   //recordExp
-  //forExp
-  //typeDec and functionDec? idk im confused abt those tbh
-  //fix his implementation in IfThenElseExp to remove unecessary JUMPs
+  //seqExp
+  //varDec
+  //typeDec
+  //functionDec
+  //IfThenElseExp to remove unecessary JUMPs
+  //breakExp
 
-
-  //need to test:
-      //arrayExp
-      //seqExp
-      //whileExp
-      //fieldVar
-      //letExp i think is good maybe just test 1 more times
 
 
 
@@ -116,10 +113,6 @@ public class Translate {
 
 
 
-
-
-
-
   public Exp SimpleVar(Access access, Level level) {
     Tree.Exp framePointer = TEMP(frame.FP());
     Level currentLevel = level;
@@ -152,8 +145,7 @@ public class Translate {
   }
 
   public Exp NilExp() {
-    //not COMPLETE
-    return null;
+    return new Ex(CONST(0));
   }
 
   public Exp IntExp(int value) {
@@ -233,21 +225,31 @@ public class Translate {
   public Exp RecordExp(ExpList init) {
     //NOT COMPLETE
     //i think we will need a helper method for this one
-    return Error();
+    Temp recordTemp = new Temp();
+    Tree.Stm seq = null;
+    int allocSize = 0;
+    
+    for (ExpList e = init; e != null; e = e.tail) {
+      seq = (seq == null) ? e.head.unNx() : SEQ(seq, e.head.unNx());
+      allocSize += frame.wordSize();
+    }
+  
+  Tree.Exp alloc = frame.externalCall("allocRecord", ExpList(CONST(allocSize)));
+  Tree.Stm initRecord = MOVE(TEMP(recordTemp), alloc);
+  
+  return new Ex(ESEQ(SEQ(initRecord, seq), TEMP(recordTemp)));
   }
 
-  public Exp SeqExp(ExpList e) {
-    //NOT COMPLETE!
-    //hasnt properly been tested
-    if(e==null)
-        return NilExp();
-    if(e.head == null)
-        return NilExp();
-    if(e.tail==null)
-        return new Ex(e.head.unEx());
-    if(e.tail.head == null)
-        return e.head;
-    else return new Ex(ESEQ(e.head.unNx(), SeqExp(e.tail).unEx()));
+   public Exp SeqExp(ExpList e) {
+    if (e == null)
+      return new Nx(null);
+    Tree.Stm stm = null;
+    for (; e.tail != null; e = e.tail)
+      stm = SEQ(stm, e.head.unNx());
+    Tree.Exp result = e.head.unEx();
+    if (result == null)
+      return new Nx(SEQ(stm, e.head.unNx()));
+    return new Ex(ESEQ(stm, result));
   }
 
   public Exp AssignExp(Exp lhs, Exp rhs) {
@@ -269,34 +271,39 @@ public class Translate {
 }
 
   public Exp ForExp(Access i, Exp lo, Exp hi, Exp body, Label done) {
-    //NOT COMPLETE
-    //test 12 - variation from his output so not correct
-    Tree.Exp loEx = lo.unEx();
-    Tree.Exp hiEx = hi.unEx();
-    Temp loReg = i.home.frame.FP();
-    Temp hiReg = new Temp();
-    Label bodyLabel = new Label();
-    Label exitLabel = new Label();
-    Label incrementLabel = new Label();
-    Tree.Stm loadLoHi = SEQ(MOVE(i.acc.exp(TEMP(loReg)), loEx), MOVE(TEMP(hiReg), hiEx));
-    Tree.Stm incExp = SEQ(SEQ(LABEL(incrementLabel), MOVE(TEMP(loReg), BINOP(Tree.BINOP.PLUS, TEMP(loReg), CONST(1)))), JUMP(bodyLabel));
-    Tree.Stm bodyStm = SEQ(body.unNx(), JUMP(incrementLabel));
-    Tree.Stm testStm = CJUMP(CJUMP.LE, i.acc.exp(TEMP(loReg)), TEMP(hiReg), bodyLabel, exitLabel);
-    Tree.Stm forBlock = SEQ(loadLoHi, SEQ(testStm, SEQ(bodyStm, incExp)));
-    return new Nx(SEQ(forBlock, LABEL(exitLabel)));
+    Temp home = i.home.frame.FP();
+    Exp id = new Ex(i.acc.exp(TEMP(home)));
+    return ForExp(id, lo, hi, body, done);
 }
 
-  public Exp ForExp(Exp id, Exp lo, Exp hi, Exp body, Label done) {
-    //NOT COMPLETE
-    //why r there two, ur killing me
-      return Error();
+public Exp ForExp(Exp id, Exp lo, Exp hi, Exp body, Label done) {
+    Temp iTemp = new Temp();
+    Temp limitTemp = new Temp();
+    Tree.Stm init_i = new Tree.MOVE(new Tree.TEMP(iTemp), lo.unEx());
+    Tree.Stm init_limit = new Tree.MOVE(new Tree.TEMP(limitTemp), hi.unEx());
+    
+    Label testLabel = new Label();
+    Tree.CJUMP condition = new Tree.CJUMP(Tree.CJUMP.LE, new Tree.TEMP(iTemp), new Tree.TEMP(limitTemp), testLabel, done);
+    
+    Tree.Stm update_i = new Tree.MOVE(new Tree.TEMP(iTemp), new Tree.BINOP(Tree.BINOP.PLUS, new Tree.TEMP(iTemp), new Tree.CONST(1)));
+    
+    // Combine body, update_i, and the condition for the while loop
+    Tree.Stm whileBody = new Tree.SEQ(new Tree.LABEL(testLabel), new Tree.SEQ(body.unNx(), new Tree.SEQ(update_i, new Tree.SEQ(condition, new Tree.LABEL(done)))));
+    
+    // Set up the initial loop structure
+    Tree.Stm whileLoop = new Tree.SEQ(init_i, new Tree.SEQ(init_limit, whileBody));
+    
+    return new Nx(whileLoop); // Wrap the whileLoop within an Nx object
+}
 
-  }
+
+
 
   public Exp BreakExp(Label done) {
     return new Nx(JUMP(done));
     //should be sufficient
   }
+  
 
   public Exp LetExp(ExpList lets, Exp body) {
     //i believe this is good
@@ -311,15 +318,22 @@ public class Translate {
     }
   }
 
-  public Exp ArrayExp(Exp size, Exp init) {
-    //NOT COMPLETE, havent properly tested this
-      Tree.Exp memSize = size.unEx();
-      return new Ex(frame.externalCall("initArray", ExpList(memSize, ExpList(init.unEx()))));
-  }
+public Exp ArrayExp(Exp size, Exp init) {
+    Temp t = new Temp();
+    Tree.Exp memSize = size.unEx();
+    Tree.ESEQ arrayEseq = new Tree.ESEQ(new Tree.MOVE(new Tree.TEMP(t), frame.externalCall("initArray", ExpList(memSize, ExpList(init.unEx())))), new Tree.TEMP(t));
+    return new Ex(arrayEseq);
+}
 
-  public Exp VarDec(Access a, Exp init) {
+
+ public Exp VarDec(Access a, Exp init) {
+    if (a == null || a.acc == null || init == null) {
+        // Handle the null case or throw a more meaningful exception
+        return Error();
+    }
     return new Nx(MOVE(a.acc.exp(TEMP(frame.FP())), init.unEx()));
-  }
+}
+
 
   public Exp TypeDec() {
         //NOT COMPLETE, or its supposed to be like this but probably not
