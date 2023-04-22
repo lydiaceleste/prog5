@@ -1,8 +1,6 @@
 let
-    var sum := 0
-    var i := 1
-in
-    while i := i + 1 <= 5 do
-        sum := sum + i
-    end
-end
+    var myArray: array [5] of int := [10, 20, 30, 40, 50]
+  in
+    print(myArray[2]);
+  end
+  

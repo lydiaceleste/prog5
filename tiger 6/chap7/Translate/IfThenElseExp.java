@@ -16,23 +16,20 @@ class IfThenElseExp extends Exp {
     b = bb;
   }
 
-  Tree.Stm unCx(Label tt, Label ff) {
-    // This is the naive implementation; you should extend it to eliminate
-    // unnecessary JUMP nodes
-    Tree.Stm aStm = a.unCx(tt, ff);
-    Tree.Stm bStm = b.unCx(tt, ff);
-
-    Tree.Stm condStm = cond.unCx(t, f);
-
-    if (aStm == null && bStm == null)
-      return condStm;
-    if (aStm == null)
-      return new Tree.SEQ(condStm, new Tree.SEQ(new Tree.LABEL(f), bStm));
-    if (bStm == null)
-      return new Tree.SEQ(condStm, new Tree.SEQ(new Tree.LABEL(t), aStm));
-    return new Tree.SEQ(condStm, new Tree.SEQ(new Tree.SEQ(new Tree.LABEL(t), aStm),
-				     new Tree.SEQ(new Tree.LABEL(f), bStm)));
+Tree.Stm unCx(Label tt, Label ff) {
+  Label bTrueLabel = new Label();
+  Label joinLabel = new Label();
+  Tree.Stm aStm = a.unCx(tt, ff);
+  Tree.Stm bStm = b.unCx(tt, ff);
+  if (b == null) {
+    return aStm == null ? null : new Tree.SEQ(aStm, new Tree.LABEL(joinLabel));
+  } else {
+    return aStm == null ? new Tree.SEQ(bStm, new Tree.LABEL(joinLabel)) :
+      new Tree.SEQ(aStm, new Tree.SEQ(new Tree.LABEL(bTrueLabel),
+        new Tree.SEQ(bStm, new Tree.LABEL(joinLabel))));
   }
+}
+
 
   Tree.Exp unEx() {
     Temp result = new Temp();

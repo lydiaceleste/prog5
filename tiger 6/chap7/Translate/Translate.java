@@ -5,18 +5,20 @@ import Tree.CJUMP;
 import Temp.Temp;
 import Temp.Label;
 
-//checks: while, for
+//checks (tests work but there are discrepencies): while, for, test12.tig and forTest
+//checks (tests work but there are discrepencies): fieldvar and recordexp, test3.tig
 
-  //fieldvar
-  //subscriptVar
-  //callExp
-  //recordExp
-  //seqExp
-  //varDec
+// dont have tests to test, but they are implemented: subscript, seqexp
+
+//test 4: causes slight variation
+
+
+
   //typeDec
   //functionDec
+  //call working with them
+
   //IfThenElseExp to remove unecessary JUMPs
-  //breakExp
 
 
 
@@ -139,9 +141,11 @@ public class Translate {
   }
 
   public Exp SubscriptVar(Exp array, Exp index) {
-        //NOT COMPLETE
-
-    return Error();
+    Tree.Exp offset = BINOP(Tree.BINOP.MUL, index.unEx(), CONST(frame.wordSize()));
+		Temp pointerReg = new Temp();
+		Tree.Stm pointerStm = MOVE(TEMP(pointerReg), array.unEx());
+		Tree.Exp pointerExp = MEM(BINOP(Tree.BINOP.PLUS, TEMP(pointerReg), offset));
+		return new Ex(ESEQ(pointerStm, pointerExp));
   }
 
   public Exp NilExp() {
@@ -170,10 +174,14 @@ public class Translate {
     return frame.externalCall(f.toString(), ExpList(args));
   }
   private Tree.Exp CallExp(Level f, ExpList args, Level from) {
-        //NOT COMPLETE
-
-    throw new Error("Translate.CallExp unimplemented");
-  }
+    Tree.Exp fp = TEMP(from.frame.FP());
+    if (f.parent != from) {
+      for (Level l = from; l != f.parent; l = l.parent) {
+        fp = l.frame.formals.head.exp(fp);
+      }
+    }
+    return CALL(NAME(f.frame.name), ExpList(fp, ExpList(args)));
+    }
 
   public Exp FunExp(Symbol f, ExpList args, Level from) {
     return new Ex(CallExp(f, args, from));
@@ -331,7 +339,7 @@ public Exp ArrayExp(Exp size, Exp init) {
         // Handle the null case or throw a more meaningful exception
         return Error();
     }
-    return new Nx(MOVE(a.acc.exp(TEMP(frame.FP())), init.unEx()));
+    return new Nx(MOVE(a.acc.exp(TEMP(a.home.frame.FP())), init.unEx()));
 }
 
 

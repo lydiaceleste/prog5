@@ -1,7 +1,6 @@
 let
-    var sum := 0
-    var i := 1
+    var myString := "hello"
 in
-    for sum := 1 to 5 do
-        sum := sum + i
+    myString[2] = "r"
 end
+  
