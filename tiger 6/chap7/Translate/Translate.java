@@ -10,15 +10,14 @@ import Temp.Label;
 
 // dont have tests to test, but they are implemented: subscript, seqexp
 
-//test 4: causes slight variation
+//test 4: causes slight variation FIX IT bish\
+//test 1: causes slight variation
 
 
 
   //typeDec
   //functionDec
   //call working with them
-
-  //IfThenElseExp to remove unecessary JUMPs
 
 
 
@@ -49,7 +48,6 @@ public class Translate {
   public Frag getResult() {
     return frags;
   }
-
   private static Tree.Exp CONST(int value) {
     return new Tree.CONST(value);
   }
@@ -73,7 +71,6 @@ public class Translate {
       return exp;
     return new Tree.ESEQ(stm, exp);
   }
-
   private static Tree.Stm MOVE(Tree.Exp dst, Tree.Exp src) {
     return new Tree.MOVE(dst, src);
   }
@@ -96,7 +93,6 @@ public class Translate {
   private static Tree.Stm LABEL(Label label) {
     return new Tree.LABEL(label);
   }
-
   private static Tree.ExpList ExpList(Tree.Exp head, Tree.ExpList tail) {
     return new Tree.ExpList(head, tail);
   }
@@ -108,11 +104,9 @@ public class Translate {
       return null;
     return ExpList(exp.head.unEx(), ExpList(exp.tail));
   }
-
   public Exp Error() {
     return new Ex(CONST(0));
   }
-
 
 
   public Exp SimpleVar(Access access, Level level) {
@@ -130,21 +124,19 @@ public class Translate {
 
 
   public Exp FieldVar(Exp record, int index) {
-        //NOT COMPLETE, havent been able to test it
+    Temp r = new Temp();
+    Temp t = new Temp();
+    Tree.Exp addr = ESEQ(SEQ(MOVE(TEMP(t), record.unEx()), MOVE(TEMP(r), MEM(TEMP(t)))), TEMP(r));
     int offset = index * frame.wordSize();
-    Temp pointer = new Temp();
-    Tree.Stm pointerStm = MOVE(TEMP(pointer), record.unEx());
-    
-    Tree.Exp pointerExp = MEM(BINOP(Tree.BINOP.PLUS, TEMP(pointer), CONST(offset)));
-    
-    return new Ex(ESEQ(pointerStm, pointerExp));
+    Tree.Exp pointerExp = MEM(BINOP(Tree.BINOP.PLUS, addr, CONST(offset)));
+    return new Ex(pointerExp);
   }
 
   public Exp SubscriptVar(Exp array, Exp index) {
-    Tree.Exp offset = BINOP(Tree.BINOP.MUL, index.unEx(), CONST(frame.wordSize()));
-		Temp pointerReg = new Temp();
-		Tree.Stm pointerStm = MOVE(TEMP(pointerReg), array.unEx());
-		Tree.Exp pointerExp = MEM(BINOP(Tree.BINOP.PLUS, TEMP(pointerReg), offset));
+   	Tree.Exp offset = BINOP(Tree.BINOP.MUL, index.unEx(), CONST(frame.wordSize()));
+		Temp pointer = new Temp();
+		Tree.Stm pointerStm = MOVE(TEMP(pointer), array.unEx());
+		Tree.Exp pointerExp = MEM(BINOP(Tree.BINOP.PLUS, TEMP(pointer), offset));
 		return new Ex(ESEQ(pointerStm, pointerExp));
   }
 
@@ -170,6 +162,7 @@ public class Translate {
     return new Ex(NAME(lab));
   }
 
+
   private Tree.Exp CallExp(Symbol f, ExpList args, Level from) {
     return frame.externalCall(f.toString(), ExpList(args));
   }
@@ -181,7 +174,7 @@ public class Translate {
       }
     }
     return CALL(NAME(f.frame.name), ExpList(fp, ExpList(args)));
-    }
+  }
 
   public Exp FunExp(Symbol f, ExpList args, Level from) {
     return new Ex(CallExp(f, args, from));
@@ -195,8 +188,6 @@ public class Translate {
   public Exp ProcExp(Level f, ExpList args, Level from) {
     return new Nx(UEXP(CallExp(f, args, from)));
   }
-
-
 
 
   public Exp OpExp(int op, Exp left, Exp right) {
@@ -231,8 +222,6 @@ public class Translate {
   }
 
   public Exp RecordExp(ExpList init) {
-    //NOT COMPLETE
-    //i think we will need a helper method for this one
     Temp recordTemp = new Temp();
     Tree.Stm seq = null;
     int allocSize = 0;
@@ -241,11 +230,10 @@ public class Translate {
       seq = (seq == null) ? e.head.unNx() : SEQ(seq, e.head.unNx());
       allocSize += frame.wordSize();
     }
-  
-  Tree.Exp alloc = frame.externalCall("allocRecord", ExpList(CONST(allocSize)));
-  Tree.Stm initRecord = MOVE(TEMP(recordTemp), alloc);
-  
-  return new Ex(ESEQ(SEQ(initRecord, seq), TEMP(recordTemp)));
+    
+    Tree.Exp alloc = frame.externalCall("allocRecord", ExpList(CONST(allocSize)));
+    Tree.Stm initRecord = MOVE(TEMP(recordTemp), alloc);
+    return new Ex(ESEQ(SEQ(initRecord, seq), TEMP(recordTemp)));
   }
 
    public Exp SeqExp(ExpList e) {
@@ -269,7 +257,6 @@ public class Translate {
   }
 
   public Exp WhileExp(Exp test, Exp body, Label done) {
-    //double check this
     Label testLabel = new Label();
     Label bodyLabel = new Label();
     Tree.Stm testStm = SEQ(LABEL(testLabel), test.unCx(bodyLabel, done));
@@ -282,28 +269,19 @@ public class Translate {
     Temp home = i.home.frame.FP();
     Exp id = new Ex(i.acc.exp(TEMP(home)));
     return ForExp(id, lo, hi, body, done);
-}
+  }
 
-public Exp ForExp(Exp id, Exp lo, Exp hi, Exp body, Label done) {
-    Temp iTemp = new Temp();
-    Temp limitTemp = new Temp();
-    Tree.Stm init_i = new Tree.MOVE(new Tree.TEMP(iTemp), lo.unEx());
-    Tree.Stm init_limit = new Tree.MOVE(new Tree.TEMP(limitTemp), hi.unEx());
-    
-    Label testLabel = new Label();
-    Tree.CJUMP condition = new Tree.CJUMP(Tree.CJUMP.LE, new Tree.TEMP(iTemp), new Tree.TEMP(limitTemp), testLabel, done);
-    
-    Tree.Stm update_i = new Tree.MOVE(new Tree.TEMP(iTemp), new Tree.BINOP(Tree.BINOP.PLUS, new Tree.TEMP(iTemp), new Tree.CONST(1)));
-    
-    // Combine body, update_i, and the condition for the while loop
-    Tree.Stm whileBody = new Tree.SEQ(new Tree.LABEL(testLabel), new Tree.SEQ(body.unNx(), new Tree.SEQ(update_i, new Tree.SEQ(condition, new Tree.LABEL(done)))));
-    
-    // Set up the initial loop structure
-    Tree.Stm whileLoop = new Tree.SEQ(init_i, new Tree.SEQ(init_limit, whileBody));
-    
-    return new Nx(whileLoop); // Wrap the whileLoop within an Nx object
-}
-
+  public Exp ForExp(Exp id, Exp lo, Exp hi, Exp body, Label done) {
+      Temp iTemp = new Temp();
+      Temp limitTemp = new Temp();
+      Tree.Stm init_i = new Tree.MOVE(new Tree.TEMP(iTemp), lo.unEx());
+      Tree.Stm init_limit = new Tree.MOVE(new Tree.TEMP(limitTemp), hi.unEx());
+      Label testLabel = new Label();
+      Tree.CJUMP condition = new Tree.CJUMP(Tree.CJUMP.LE, new Tree.TEMP(iTemp), new Tree.TEMP(limitTemp), testLabel, done);
+      Tree.Stm update_i = new Tree.MOVE(new Tree.TEMP(iTemp), new Tree.BINOP(Tree.BINOP.PLUS, new Tree.TEMP(iTemp), new Tree.CONST(1)));
+      Tree.Stm whileBody = new Tree.SEQ(new Tree.LABEL(testLabel), new Tree.SEQ(body.unNx(), new Tree.SEQ(update_i, new Tree.SEQ(condition, new Tree.LABEL(done)))));
+      Tree.Stm whileLoop = new Tree.SEQ(init_i, new Tree.SEQ(init_limit, whileBody));
+      return new Nx(whileLoop); 
 
 
 
@@ -326,21 +304,19 @@ public Exp ForExp(Exp id, Exp lo, Exp hi, Exp body, Label done) {
     }
   }
 
-public Exp ArrayExp(Exp size, Exp init) {
-    Temp t = new Temp();
-    Tree.Exp memSize = size.unEx();
-    Tree.ESEQ arrayEseq = new Tree.ESEQ(new Tree.MOVE(new Tree.TEMP(t), frame.externalCall("initArray", ExpList(memSize, ExpList(init.unEx())))), new Tree.TEMP(t));
-    return new Ex(arrayEseq);
-}
+  public Exp ArrayExp(Exp size, Exp init) {
+      Temp t = new Temp();
+      Tree.Exp memSize = size.unEx();
+      Tree.ESEQ arrayEseq = new Tree.ESEQ(new Tree.MOVE(new Tree.TEMP(t), frame.externalCall("initArray", ExpList(memSize, ExpList(init.unEx())))), new Tree.TEMP(t));
+      return new Ex(arrayEseq);
+  }
 
-
- public Exp VarDec(Access a, Exp init) {
-    if (a == null || a.acc == null || init == null) {
-        // Handle the null case or throw a more meaningful exception
-        return Error();
-    }
-    return new Nx(MOVE(a.acc.exp(TEMP(a.home.frame.FP())), init.unEx()));
-}
+  public Exp VarDec(Access a, Exp init) {
+      if (a == null || a.acc == null || init == null) {
+          return Error();
+      }
+      return new Nx(MOVE(a.acc.exp(TEMP(a.home.frame.FP())), init.unEx()));
+  }
 
 
   public Exp TypeDec() {
