@@ -1,6 +1,6 @@
 let
-  var x := 5
-  var y := 7
-in
-  x + y
-end
+        typedef {name:string, age:int} rectype
+        var rec1:rectype := rectype {name="Nobody", age=1000}
+  in
+        rec1.name := "Somebody"
+  end

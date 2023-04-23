@@ -269,15 +269,11 @@ public class Translate {
   
 
 public Exp LetExp(ExpList lets, Exp body) {
-    if (lets == null) {
-        return body;
-    } else {
-        Tree.Stm seq = null;
-        for (ExpList e = lets; e != null; e = e.tail) {
-            seq = (seq == null) ? e.head.unNx() : SEQ(seq, e.head.unNx());
-        }
-       return new Ex(new Tree.ESEQ(seq, body.unEx()));
-    }
+    Tree.Stm stm = null;
+    for (ExpList e = lets; e != null; e = e.tail) {stm = SEQ(stm, e.head.unNx());  }
+    Tree.Exp result = body.unEx();
+    if (result == null) { return new Nx(SEQ(stm, body.unNx())); }
+    return new Ex(ESEQ(stm, result));
 }
 
 
