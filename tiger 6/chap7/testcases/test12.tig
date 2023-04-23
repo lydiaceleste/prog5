@@ -1,5 +1,4 @@
 /* valid for and let */
-
 let
 	var a:= 0
 in 
