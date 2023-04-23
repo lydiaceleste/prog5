@@ -5,6 +5,17 @@ import Tree.CJUMP;
 import Temp.Temp;
 import Temp.Label;
 
+//checks (tests work but there are discrepencies): while, for, test12.tig and forTest
+//checks (tests work but there are discrepencies): fieldvar and recordexp, test3.tig
+
+// dont have tests to test, but they are implemented: subscript, seqexp
+
+//test 4: causes slight variation FIX IT bish\
+//test 1: causes slight variation
+  //typeDec
+  //functionDec
+  //call working with them
+
 
 
 public class Translate {
@@ -91,13 +102,16 @@ public class Translate {
     return new Ex(CONST(0));
   }
 
+
   public Exp SimpleVar(Access access, Level level) {
     Tree.Exp framePointer = TEMP(frame.FP());
     Level currentLevel = level;
+    
     while (currentLevel != access.home) {
       framePointer = currentLevel.parent.frame.formals.head.exp(framePointer);
       currentLevel = currentLevel.parent;
     }
+  
     Tree.Exp location = access.acc.exp(framePointer);
     return new Ex(location);
   }
@@ -205,10 +219,12 @@ public class Translate {
     Temp recordTemp = new Temp();
     Tree.Stm seq = null;
     int allocSize = 0;
+    
     for (ExpList e = init; e != null; e = e.tail) {
       seq = (seq == null) ? e.head.unNx() : SEQ(seq, e.head.unNx());
       allocSize += frame.wordSize();
     }
+    
     Tree.Exp alloc = frame.externalCall("allocRecord", ExpList(CONST(allocSize)));
     Tree.Stm initRecord = MOVE(TEMP(recordTemp), alloc);
     return new Ex(ESEQ(SEQ(initRecord, seq), TEMP(recordTemp)));
@@ -269,11 +285,15 @@ public class Translate {
   
 
 public Exp LetExp(ExpList lets, Exp body) {
-    Tree.Stm stm = null;
-    for (ExpList e = lets; e != null; e = e.tail) {stm = SEQ(stm, e.head.unNx());  }
-    Tree.Exp result = body.unEx();
-    if (result == null) { return new Nx(SEQ(stm, body.unNx())); }
-    return new Ex(ESEQ(stm, result));
+    if (lets == null) {
+        return body;
+    } else {
+        Tree.Stm seq = null;
+        for (ExpList e = lets; e != null; e = e.tail) {
+            seq = (seq == null) ? e.head.unNx() : SEQ(seq, e.head.unNx());
+        }
+        return new Ex(new Tree.ESEQ(seq, body.unEx()));
+    }
 }
 
 
@@ -293,10 +313,12 @@ public Exp LetExp(ExpList lets, Exp body) {
 
 
   public Exp TypeDec() {
+
     return new Nx(null);
   }
 
   public Exp FunctionDec() {
+
     return new Nx(null);
   }
 }
