@@ -5,18 +5,6 @@ import Tree.CJUMP;
 import Temp.Temp;
 import Temp.Label;
 
-//checks (tests work but there are discrepencies): while, for, test12.tig and forTest
-//checks (tests work but there are discrepencies): fieldvar and recordexp, test3.tig
-
-// dont have tests to test, but they are implemented: subscript, seqexp
-
-//test 4: causes slight variation FIX IT bish\
-//test 1: causes slight variation
-  //typeDec
-  //functionDec
-  //call working with them
-
-
 
 public class Translate {
   public Frame.Frame frame;
@@ -265,18 +253,22 @@ public class Translate {
     return ForExp(id, lo, hi, body, done);
   }
 
-  public Exp ForExp(Exp id, Exp lo, Exp hi, Exp body, Label done) {
-      Temp iTemp = new Temp();
-      Temp limitTemp = new Temp();
-      Tree.Stm init_i = new Tree.MOVE(new Tree.TEMP(iTemp), lo.unEx());
-      Tree.Stm init_limit = new Tree.MOVE(new Tree.TEMP(limitTemp), hi.unEx());
-      Label testLabel = new Label();
-      Tree.CJUMP condition = new Tree.CJUMP(Tree.CJUMP.LE, new Tree.TEMP(iTemp), new Tree.TEMP(limitTemp), testLabel, done);
-      Tree.Stm update_i = new Tree.MOVE(new Tree.TEMP(iTemp), new Tree.BINOP(Tree.BINOP.PLUS, new Tree.TEMP(iTemp), new Tree.CONST(1)));
-      Tree.Stm whileBody = new Tree.SEQ(new Tree.LABEL(testLabel), new Tree.SEQ(body.unNx(), new Tree.SEQ(update_i, new Tree.SEQ(condition, new Tree.LABEL(done)))));
-      Tree.Stm whileLoop = new Tree.SEQ(init_i, new Tree.SEQ(init_limit, whileBody));
-      return new Nx(whileLoop); 
-  }
+public Exp ForExp(Exp id, Exp lo, Exp hi, Exp body, Label done) {
+    Temp iTemp = new Temp();
+    Temp limitTemp = new Temp();
+    Tree.Stm init_i = new Tree.MOVE(new Tree.TEMP(iTemp), lo.unEx());
+    Tree.Stm init_limit = new Tree.MOVE(new Tree.TEMP(limitTemp), hi.unEx());
+    Label testLabel = new Label();
+    Label bodyLabel = new Label();
+    Tree.CJUMP condition = new Tree.CJUMP(Tree.CJUMP.LE, new Tree.TEMP(iTemp), new Tree.TEMP(limitTemp), testLabel, done);
+    Tree.Stm update_i = new Tree.MOVE(new Tree.TEMP(iTemp), new Tree.BINOP(Tree.BINOP.PLUS, new Tree.TEMP(iTemp), new Tree.CONST(1)));
+    Tree.Stm loopSequence = new Tree.SEQ(new Tree.LABEL(testLabel), new Tree.SEQ(body.unNx(), new Tree.SEQ(update_i, new Tree.CJUMP(Tree.CJUMP.LT, new Tree.TEMP(iTemp), new Tree.TEMP(limitTemp), bodyLabel, done))));
+    Tree.Stm whileLoop = new Tree.SEQ(init_i, new Tree.SEQ(init_limit, new Tree.SEQ(condition, new Tree.SEQ(loopSequence, new Tree.SEQ(new Tree.LABEL(bodyLabel), new Tree.LABEL(done))))));
+    return new Nx(whileLoop);
+}
+
+
+
 
   public Exp BreakExp(Label done) {
     return new Nx(JUMP(done));
@@ -284,7 +276,7 @@ public class Translate {
   }
   
 
-public Exp LetExp(ExpList lets, Exp body) {
+  public Exp LetExp(ExpList lets, Exp body) {
     if (lets == null) {
         return body;
     } else {
@@ -292,10 +284,9 @@ public Exp LetExp(ExpList lets, Exp body) {
         for (ExpList e = lets; e != null; e = e.tail) {
             seq = (seq == null) ? e.head.unNx() : SEQ(seq, e.head.unNx());
         }
-        return new Ex(new Tree.ESEQ(seq, body.unEx()));
+        return new Ex(ESEQ(seq, body.unEx())); 
     }
-}
-
+  }
 
   public Exp ArrayExp(Exp size, Exp init) {
       Temp t = new Temp();
