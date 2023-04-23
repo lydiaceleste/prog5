@@ -1,6 +1,6 @@
 let
-    var myArray: array [5] of int := [10, 20, 30, 40, 50]
-  in
-    print(myArray[2]);
-  end
-  
+  var x := 5
+  var y := 7
+in
+  x + y
+end

@@ -31,17 +31,16 @@ Tree.Stm unCx(Label tt, Label ff) {
 }
 
 
-  Tree.Exp unEx() {
+Tree.Exp unEx() {
     Temp result = new Temp();
     Tree.Stm condStm = cond.unCx(t, f);
     Tree.Stm aStm = new Tree.MOVE(new Tree.TEMP(result), a.unEx());
     Tree.Stm bStm = new Tree.MOVE(new Tree.TEMP(result), b.unEx());
-    Tree.Stm trueStm = new Tree.SEQ(new Tree.LABEL(t), aStm);
-    Tree.Stm falseStm = new Tree.SEQ(new Tree.LABEL(f), bStm);
+    Tree.Stm trueStm = new Tree.SEQ(new Tree.LABEL(t), new Tree.SEQ(aStm, new Tree.JUMP(join)));
+    Tree.Stm falseStm = new Tree.SEQ(new Tree.LABEL(f), new Tree.SEQ(bStm, new Tree.JUMP(join)));
     Tree.Stm joinStm = new Tree.LABEL(join);
-    return new Tree.ESEQ(new Tree.SEQ(condStm, new Tree.SEQ(trueStm, new Tree.SEQ(joinStm, falseStm))),
-                         new Tree.TEMP(result));
-  }
+    return new Tree.ESEQ(new Tree.SEQ(new Tree.SEQ(condStm, new Tree.SEQ(trueStm, falseStm)), joinStm), new Tree.TEMP(result));
+}
 
   Tree.Stm unNx() {
     Tree.Stm condStm = cond.unCx(t, f);
@@ -49,7 +48,7 @@ Tree.Stm unCx(Label tt, Label ff) {
     Tree.Stm falseStm = b.unNx();
     Tree.Stm joinStm = new Tree.JUMP(join);
     return new Tree.SEQ(condStm, new Tree.SEQ(trueStm, new Tree.SEQ(falseStm, new Tree.SEQ(joinStm, new Tree.LABEL(join)))));
-}
+  }
   
 
 }
